@@ -1,8 +1,8 @@
 
-import LoginForm from "@/components/LoginForm";
+import AuthWrapper from "@/components/AuthWrapper";
 
 const Index = () => {
-  return <LoginForm />;
+  return <AuthWrapper />;
 };
 
 export default Index;
