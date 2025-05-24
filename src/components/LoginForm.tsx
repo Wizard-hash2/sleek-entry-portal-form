@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Mail, Hash, TrendingUp, Eye, EyeOff } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,7 @@ const LoginForm = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
@@ -31,17 +33,64 @@ const LoginForm = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log('Form submitted:', formData);
-    
-    toast({
-      title: "Login Successful!",
-      description: `Welcome back, ${formData.name}! You're now logged in.`,
-    });
-    
-    setIsLoading(false);
+    try {
+      if (isSignUp) {
+        // Sign up new user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+            }
+          }
+        });
+
+        if (authError) throw authError;
+
+        // Store additional profile data in users table
+        if (authData.user) {
+          const { error: profileError } = await supabase
+            .from('users')
+            .insert({
+              id: authData.user.id,
+              name: formData.name,
+              email: formData.email,
+              market: formData.market
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+          }
+        }
+
+        toast({
+          title: "Account Created!",
+          description: "Please check your email to confirm your account.",
+        });
+      } else {
+        // Sign in existing user
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Login Successful!",
+          description: `Welcome back, ${formData.name || 'User'}!`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const markets = [
@@ -67,50 +116,54 @@ const LoginForm = () => {
             <User className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome Back
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
           <CardDescription className="text-gray-600">
-            Please sign in to your account
+            {isSignUp ? 'Sign up for a new account' : 'Please sign in to your account'}
           </CardDescription>
         </CardHeader>
         
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="id" className="text-sm font-medium text-gray-700">
-                User ID
-              </Label>
-              <div className="relative">
-                <Hash className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="id"
-                  type="text"
-                  placeholder="Enter your ID"
-                  value={formData.id}
-                  onChange={(e) => handleInputChange('id', e.target.value)}
-                  className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                  required
-                />
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="id" className="text-sm font-medium text-gray-700">
+                  User ID
+                </Label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="id"
+                    type="text"
+                    placeholder="Enter your ID"
+                    value={formData.id}
+                    onChange={(e) => handleInputChange('id', e.target.value)}
+                    className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                    required={isSignUp}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                Full Name
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                  required
-                />
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                  Full Name
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                    required={isSignUp}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -130,26 +183,28 @@ const LoginForm = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="market" className="text-sm font-medium text-gray-700">
-                Market Sector
-              </Label>
-              <div className="relative">
-                <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
-                <Select onValueChange={(value) => handleInputChange('market', value)} required>
-                  <SelectTrigger className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                    <SelectValue placeholder="Select your market sector" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {markets.map((market) => (
-                      <SelectItem key={market} value={market.toLowerCase()}>
-                        {market}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="market" className="text-sm font-medium text-gray-700">
+                  Market Sector
+                </Label>
+                <div className="relative">
+                  <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
+                  <Select onValueChange={(value) => handleInputChange('market', value)} required={isSignUp}>
+                    <SelectTrigger className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Select your market sector" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {markets.map((market) => (
+                        <SelectItem key={market} value={market.toLowerCase()}>
+                          {market}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-gray-700">
@@ -183,19 +238,23 @@ const LoginForm = () => {
               {isLoading ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Signing In...</span>
+                  <span>{isSignUp ? 'Creating Account...' : 'Signing In...'}</span>
                 </div>
               ) : (
-                'Sign In'
+                isSignUp ? 'Create Account' : 'Sign In'
               )}
             </Button>
 
             <div className="text-center pt-4">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                  Sign up here
-                </a>
+                {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                >
+                  {isSignUp ? 'Sign in here' : 'Sign up here'}
+                </button>
               </p>
             </div>
           </form>

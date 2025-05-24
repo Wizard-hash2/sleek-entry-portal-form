@@ -90,18 +90,21 @@ export type Database = {
           id: string
           market: string | null
           name: string | null
+          Password: string | null
         }
         Insert: {
           email?: string | null
           id?: string
           market?: string | null
           name?: string | null
+          Password?: string | null
         }
         Update: {
           email?: string | null
           id?: string
           market?: string | null
           name?: string | null
+          Password?: string | null
         }
         Relationships: []
       }
