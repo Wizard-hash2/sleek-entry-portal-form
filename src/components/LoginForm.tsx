@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const LoginForm = () => {
+  console.log('LoginForm component rendering...');
+  
   const [formData, setFormData] = useState({
     id: '',
     name: '',
@@ -22,7 +23,10 @@ const LoginForm = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
 
+  console.log('LoginForm state:', { formData, showPassword, isLoading, isSignUp });
+
   const handleInputChange = (field: string, value: string) => {
+    console.log('Input change:', field, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -31,10 +35,12 @@ const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted:', formData);
     setIsLoading(true);
     
     try {
       if (isSignUp) {
+        console.log('Attempting sign up...');
         // Sign up new user
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
@@ -47,6 +53,7 @@ const LoginForm = () => {
         });
 
         if (authError) throw authError;
+        console.log('Auth data:', authData);
 
         // Store additional profile data in users table
         if (authData.user) {
@@ -69,6 +76,7 @@ const LoginForm = () => {
           description: "Please check your email to confirm your account.",
         });
       } else {
+        console.log('Attempting sign in...');
         // Sign in existing user
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
@@ -76,6 +84,7 @@ const LoginForm = () => {
         });
 
         if (error) throw error;
+        console.log('Sign in successful:', data);
 
         toast({
           title: "Login Successful!",
@@ -83,6 +92,7 @@ const LoginForm = () => {
         });
       }
     } catch (error: any) {
+      console.error('Authentication error:', error);
       toast({
         title: "Error",
         description: error.message || "Something went wrong. Please try again.",
@@ -105,6 +115,8 @@ const LoginForm = () => {
     "Transportation",
     "Entertainment"
   ];
+
+  console.log('About to render LoginForm UI...');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 p-4">
