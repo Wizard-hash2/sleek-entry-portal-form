@@ -1,7 +1,9 @@
+
 ## 🧮 Problem Statement: Price Tracker Tool for Retail Shopkeepers
 
 Shopkeepers in informal markets face difficulties managing their inventory due to rapidly fluctuating supplier prices. They often lack digital tools to monitor, compare, and analyze price trends efficiently. This project aims to empower them with a simple, intelligent, and accessible solution.
 
+Pitch Derk: https://www.canva.com/design/DAGoj8Vlfm0/19NBrJHYyz7rPDmIs_pjHQ/edit?utm_content=DAGoj8Vlfm0&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
 ---
 
 # 🛍️ Price Tracker - Smart Price Management System
