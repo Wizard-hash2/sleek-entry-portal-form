@@ -16,12 +16,18 @@ const ProductList = () => {
   const { data: products, isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
+      console.log('ProductList: Fetching products...');
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('ProductList: Error fetching products:', error);
+        throw error;
+      }
+      
+      console.log('ProductList: Fetched products:', data?.length || 0, 'items');
       return data as Product[];
     }
   });
@@ -40,11 +46,13 @@ const ProductList = () => {
   }
 
   if (error) {
+    console.error('ProductList: Render error:', error);
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-center text-red-600">
             <p>Error loading products: {(error as Error).message}</p>
+            <p className="text-sm mt-2">Check console for details</p>
           </div>
         </CardContent>
       </Card>
@@ -56,7 +64,7 @@ const ProductList = () => {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Package className="h-5 w-5" />
-          <span>Product List</span>
+          <span>Product List ({products?.length || 0} items)</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -83,6 +91,9 @@ const ProductList = () => {
           <div className="text-center py-8">
             <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">No products found</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Database might be empty or there could be a connection issue
+            </p>
           </div>
         )}
       </CardContent>

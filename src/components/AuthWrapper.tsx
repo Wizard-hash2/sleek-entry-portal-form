@@ -10,8 +10,11 @@ const AuthWrapper = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('AuthWrapper: Setting up auth listeners...');
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('AuthWrapper: Initial session check:', session ? 'User logged in' : 'No user');
       setSession(session);
       setLoading(false);
     });
@@ -20,6 +23,7 @@ const AuthWrapper = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('AuthWrapper: Auth state changed:', _event, session ? 'User logged in' : 'No user');
       setSession(session);
       setLoading(false);
     });
@@ -39,9 +43,11 @@ const AuthWrapper = () => {
   }
 
   if (!session) {
+    console.log('AuthWrapper: Rendering LoginForm');
     return <LoginForm />;
   }
 
+  console.log('AuthWrapper: User authenticated, rendering Dashboard');
   return <Dashboard />;
 };
 
