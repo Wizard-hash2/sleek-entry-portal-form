@@ -17,10 +17,15 @@ const ProductList = () => {
     queryKey: ['products'],
     queryFn: async () => {
       console.log('ProductList: Fetching products...');
+      console.log('ProductList: Supabase URL:', supabase.supabaseUrl);
+      
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('name');
+      
+      console.log('ProductList: Raw response data:', data);
+      console.log('ProductList: Raw response error:', error);
       
       if (error) {
         console.error('ProductList: Error fetching products:', error);
@@ -31,6 +36,8 @@ const ProductList = () => {
       return data as Product[];
     }
   });
+
+  console.log('ProductList: Current state - isLoading:', isLoading, 'error:', error, 'products:', products);
 
   if (isLoading) {
     return (
@@ -53,6 +60,7 @@ const ProductList = () => {
           <div className="text-center text-red-600">
             <p>Error loading products: {(error as Error).message}</p>
             <p className="text-sm mt-2">Check console for details</p>
+            <p className="text-xs mt-2">Supabase URL: {supabase.supabaseUrl}</p>
           </div>
         </CardContent>
       </Card>
@@ -93,6 +101,9 @@ const ProductList = () => {
             <p className="text-gray-600">No products found</p>
             <p className="text-sm text-gray-500 mt-2">
               Database might be empty or there could be a connection issue
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              Connected to: {supabase.supabaseUrl}
             </p>
           </div>
         )}
